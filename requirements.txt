@@ -1,0 +1,16 @@
+# Coordination Research Prototypes - Dependencies
+
+# Core dependencies
+pytest>=7.4.0          # Testing framework
+pytest-cov>=4.1.0      # Coverage reporting
+
+# Type checking
+mypy>=1.5.0           # Static type checker
+
+# Code quality
+black>=23.7.0         # Code formatter
+flake8>=6.1.0         # Linting
+isort>=5.12.0         # Import sorting
+
+# No external libraries needed - uses stdlib only
+# (sqlite3, threading, time, uuid are all standard library)
