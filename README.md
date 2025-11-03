@@ -9,6 +9,58 @@
 
 This repository contains **educational prototypes** exploring coordination theory for multi-agent systems, with a focus on AI agents that need to collaborate while avoiding conflicts. All code is conceptual and designed for research and learning purposes.
 
+```mermaid
+graph TD
+    subgraph "Multi-Agent Coordination System"
+        subgraph "Agents"
+            A1[Agent 1<br/>Security]
+            A2[Agent 2<br/>Docker]
+            A3[Agent 3<br/>Testing]
+        end
+
+        subgraph "Coordination Layer"
+            FL[File Locking]
+            HB[Heartbeat Monitor]
+            TD[Task Delegation]
+            MB[Message Bus]
+        end
+
+        subgraph "Storage"
+            DB[(SQLite<br/>Coordination DB)]
+        end
+
+        A1 <--> FL
+        A2 <--> FL
+        A3 <--> FL
+
+        A1 --> HB
+        A2 --> HB
+        A3 --> HB
+
+        A1 <--> TD
+        A2 <--> TD
+        A3 <--> TD
+
+        A1 <--> MB
+        A2 <--> MB
+        A3 <--> MB
+
+        FL --> DB
+        HB --> DB
+        TD --> DB
+        MB --> DB
+    end
+
+    style A1 fill:#667eea
+    style A2 fill:#764ba2
+    style A3 fill:#f093fb
+    style FL fill:#4ecdc4
+    style HB fill:#95e1d3
+    style TD fill:#ffd93d
+    style MB fill:#6bcf7f
+    style DB fill:#c9d1d9
+```
+
 ### Research Context
 
 Modern AI systems increasingly involve multiple autonomous agents working on shared resources. This research explores:
@@ -33,6 +85,23 @@ When multiple agents modify shared resources (files, databases), we need coordin
 - **Lock queuing**: Fair access for waiting agents
 - **Change history**: Audit trail for debugging
 
+```mermaid
+sequenceDiagram
+    participant A1 as Agent 1
+    participant DB as Lock Database
+    participant A2 as Agent 2
+
+    A1->>DB: acquire_lock(file.txt)
+    DB-->>A1: Lock granted ✓
+    A2->>DB: acquire_lock(file.txt)
+    DB-->>A2: Lock denied (timeout: 300s)
+    A1->>A1: Modify file.txt
+    A1->>DB: release_lock(file.txt)
+    DB-->>A1: Lock released
+    A2->>DB: acquire_lock(file.txt)
+    DB-->>A2: Lock granted ✓
+```
+
 **Key Papers:**
 - Lamport, L. (1978). "Time, Clocks, and the Ordering of Events in a Distributed System"
 - Ricart, G., & Agrawala, A. K. (1981). "An optimal algorithm for mutual exclusion"
@@ -44,6 +113,26 @@ Agents periodically signal their liveness via heartbeats. If heartbeats stop, th
 - **Timeout detection**: Configurable heartbeat intervals
 - **Graceful degradation**: Automatic cleanup of stale agents
 - **Resource reclamation**: Release locks from failed agents
+
+```mermaid
+stateDiagram-v2
+    [*] --> Alive: register_agent()
+    Alive --> Alive: heartbeat() < 60s
+    Alive --> Suspected: No heartbeat for 60s
+    Suspected --> Alive: heartbeat() received
+    Suspected --> Dead: Timeout confirmed
+    Dead --> [*]: cleanup_resources()
+
+    note right of Alive
+        Agent sends periodic
+        heartbeat signals
+    end note
+
+    note right of Dead
+        Locks released,
+        tasks reassigned
+    end note
+```
 
 **Key Papers:**
 - Chandra, T. D., & Toueg, S. (1996). "Unreliable failure detectors for reliable distributed systems"
@@ -57,6 +146,29 @@ Complex work is broken into tasks and distributed across capable agents:
 - **Dependency graphs**: Enforce execution order
 - **Workload balancing**: Distribute tasks evenly
 
+```mermaid
+graph TB
+    subgraph "Task Queue"
+        T1[Task 1<br/>Priority: 1<br/>Capabilities: security]
+        T2[Task 2<br/>Priority: 5<br/>Capabilities: docker]
+        T3[Task 3<br/>Priority: 1<br/>Capabilities: testing]
+    end
+
+    subgraph "Available Agents"
+        A1[Security Agent<br/>Workload: 2 tasks<br/>Capabilities: security, code-analysis]
+        A2[Docker Agent<br/>Workload: 0 tasks<br/>Capabilities: docker, kubernetes]
+        A3[Test Agent<br/>Workload: 1 task<br/>Capabilities: testing, qa]
+    end
+
+    T1 -->|Capability Match| A1
+    T2 -->|Least Busy Agent| A2
+    T3 -->|Priority + Match| A3
+
+    style T1 fill:#ff6b6b
+    style T3 fill:#ff6b6b
+    style T2 fill:#ffd93d
+```
+
 **Key Papers:**
 - Weiss, G. (1999). "Multiagent Systems: A Modern Approach to Distributed AI"
 
@@ -68,6 +180,29 @@ Agents coordinate without centralized control:
 - **Resource reservations**: CPU/memory allocation
 - **Rollback mechanisms**: Recover from failures
 - **Conflict detection**: Identify concurrent modifications
+
+```mermaid
+flowchart LR
+    subgraph "Coordination Flow"
+        A[Agent Intent] --> B{Check Conflicts}
+        B -->|No Conflict| C[Acquire Lock]
+        B -->|Conflict Detected| D[Wait/Retry]
+        C --> E[Reserve Resources]
+        E --> F[Execute Task]
+        F --> G{Success?}
+        G -->|Yes| H[Record Change]
+        G -->|No| I[Rollback]
+        H --> J[Release Lock]
+        I --> J
+        J --> K[Send Completion Message]
+    end
+
+    style A fill:#4ecdc4
+    style F fill:#95e1d3
+    style G fill:#ffd93d
+    style I fill:#ff6b6b
+    style K fill:#6bcf7f
+```
 
 **Key Papers:**
 - Brewer, E. A. (2000). "Towards robust distributed systems" (CAP theorem)
